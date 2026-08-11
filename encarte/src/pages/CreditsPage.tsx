@@ -4,11 +4,11 @@ import { Hair } from "../components/Hair";
 
 const CREDITS = [
   ["artista", "lino"],
-  ["letras", "thaís lino + claude (anthropic)"],
+  ["letras", "thais lino + claude (anthropic)"],
   ["produção musical", "suno ai"],
   ["mixagem", "suno ai"],
-  ["fotos", "thaís lino"],
-  ["design do encarte", "thaís lino + kiro"],
+  ["fotos", "thais lino"],
+  ["design do encarte", "thais lino + kiro"],
   ["gravação", "greenwich village, ny"],
 ];
 

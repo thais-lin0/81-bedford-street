@@ -1,220 +1,295 @@
-import { useRef, useState, useEffect } from "react";
-import { TRACKS } from "../data";
+import { useEffect, useRef, useState } from "react";
+import { SONGS, TRACKS } from "../data";
 import coverImg from "../assets/bedford-treated.jpg";
 
-/** Player online — página para ouvir o álbum */
-export function PlayerPage() {
-  const [currentTrack, setCurrentTrack] = useState(0);
+interface PlayerPageProps {
+  currentTrack: number;
+  onTrackChange: (track: number) => void;
+}
+
+function formatTime(seconds: number) {
+  if (!seconds || Number.isNaN(seconds)) return "0:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60);
+  return `${minutes}:${remainder.toString().padStart(2, "0")}`;
+}
+
+/** Player integrado ao encarte, com a letra da faixa em reprodução ao lado. */
+export function PlayerPage({ currentTrack, onTrackChange }: PlayerPageProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [audioError, setAudioError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const shouldAutoplayRef = useRef(false);
 
-  const trackFile = `/musicas/${String(currentTrack + 1).padStart(2, "0")}-${TRACKS[currentTrack][0].replace(/\s+/g, "-")}.mp3`;
+  const [title] = TRACKS[currentTrack];
+  const lyrics = SONGS[title];
+  const trackBase = `/musicas/${String(currentTrack + 1).padStart(2, "0")}-${title.replace(/\s+/g, "-")}`;
 
   useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const shouldAutoplay = shouldAutoplayRef.current;
+    shouldAutoplayRef.current = false;
     setProgress(0);
     setCurrentTime(0);
-    setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.load();
+    setDuration(0);
+    setAudioError(false);
+    audio.load();
+
+    if (shouldAutoplay) {
+      audio.play().catch(() => setAudioError(true));
     }
-  }, [currentTrack]);
+  }, [currentTrack, trackBase]);
+
+  function playTrack(index: number) {
+    if (index === currentTrack) {
+      audioRef.current?.play().catch(() => setAudioError(true));
+      return;
+    }
+
+    shouldAutoplayRef.current = true;
+    onTrackChange(index);
+  }
 
   function togglePlay() {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      audio.play().catch(() => setAudioError(true));
     } else {
-      audioRef.current.play().catch(() => {});
+      audio.pause();
     }
-    setIsPlaying(!isPlaying);
   }
 
   function handleTimeUpdate() {
-    if (!audioRef.current) return;
-    const { currentTime: ct, duration: d } = audioRef.current;
-    setCurrentTime(ct);
-    setDuration(d || 0);
-    setProgress(d ? ct / d : 0);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const nextDuration = audio.duration || 0;
+    setCurrentTime(audio.currentTime);
+    setDuration(nextDuration);
+    setProgress(nextDuration ? audio.currentTime / nextDuration : 0);
   }
 
   function handleEnded() {
     setIsPlaying(false);
     if (currentTrack < TRACKS.length - 1) {
-      setCurrentTrack(currentTrack + 1);
-      setTimeout(() => {
-        audioRef.current?.play();
-        setIsPlaying(true);
-      }, 300);
+      playTrack(currentTrack + 1);
     }
   }
 
-  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
-    if (!audioRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    audioRef.current.currentTime = pct * duration;
-  }
+  function handleSeek(event: React.MouseEvent<HTMLDivElement>) {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
 
-  function formatTime(s: number) {
-    if (!s || isNaN(s)) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  }
-
-  function prevTrack() {
-    if (currentTrack > 0) setCurrentTrack(currentTrack - 1);
-  }
-
-  function nextTrack() {
-    if (currentTrack < TRACKS.length - 1) setCurrentTrack(currentTrack + 1);
+    const rect = event.currentTarget.getBoundingClientRect();
+    const percentage = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    audio.currentTime = percentage * duration;
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <div className="w-full max-w-sm mx-auto px-6 py-10">
-        {/* Back to encarte */}
-        <a
-          href="#"
-          className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-wide uppercase text-ink-2 hover:text-accent transition-colors mb-6"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Ver encarte
-        </a>
+    <section className="relative w-full max-w-6xl overflow-hidden rounded-sm bg-paper text-ink shadow-2xl">
+      <div className="grain absolute inset-0" />
 
-        {/* Hidden audio element */}
-        <audio
-          ref={audioRef}
-          src={trackFile}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleEnded}
-          onLoadedMetadata={handleTimeUpdate}
-        />
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleTimeUpdate}
+        onPlay={() => {
+          setIsPlaying(true);
+          setHasStarted(true);
+          setAudioError(false);
+        }}
+        onPause={() => setIsPlaying(false)}
+        onEnded={handleEnded}
+        onError={() => setAudioError(true)}
+      >
+        <source src={`${trackBase}.m4a`} type="audio/mp4" />
+        <source src={`${trackBase}.mp3`} type="audio/mpeg" />
+      </audio>
 
-        {/* Album art */}
-        <div className="w-full aspect-square rounded overflow-hidden shadow-lg">
-          <img
-            src={coverImg}
-            alt="81 Bedford Street"
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <div className="relative grid lg:grid-cols-[380px_minmax(0,1fr)]">
+        <div className="border-b border-faint p-5 sm:p-7 lg:border-b-0 lg:border-r">
+          <div className="lg:sticky lg:top-24">
+            <div className="mx-auto aspect-square w-full max-w-[260px] overflow-hidden rounded shadow-lg">
+              <img
+                src={coverImg}
+                alt="Capa de 81 Bedford Street"
+                className="h-full w-full object-cover"
+              />
+            </div>
 
-        {/* Now playing */}
-        <div className="mt-5">
-          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-ink-2">
-            Thaís Lino · 81 Bedford Street
-          </div>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="font-mono text-[10px] text-ink-2">
-              {String(currentTrack + 1).padStart(2, "0")}
-            </span>
-            <h2 className="font-grotesk font-bold text-[20px] text-ink flex-1">
-              {TRACKS[currentTrack][0]}
-            </h2>
-          </div>
-        </div>
+            <div className="mx-auto mt-5 max-w-[320px]">
+              <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-2">
+                Lino · 81 Bedford Street
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="font-mono text-[10px] text-ink-2">
+                  {String(currentTrack + 1).padStart(2, "0")}
+                </span>
+                <h2 className="flex-1 font-grotesk text-[20px] font-bold text-ink">
+                  {title}
+                </h2>
+              </div>
 
-        {/* Progress bar */}
-        <div
-          className="mt-4 h-1.5 bg-faint rounded-full cursor-pointer relative"
-          onClick={handleSeek}
-        >
-          <div
-            className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all"
-            style={{ width: `${progress * 100}%` }}
-          />
-          <div
-            className="absolute top-1/2 w-3 h-3 bg-accent rounded-full shadow"
-            style={{ left: `${progress * 100}%`, transform: "translate(-50%, -50%)" }}
-          />
-        </div>
+              <div
+                className="relative mt-4 h-1.5 cursor-pointer rounded-full bg-faint"
+                onClick={handleSeek}
+                role="slider"
+                aria-label="Progresso da música"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-accent"
+                  style={{ width: `${progress * 100}%` }}
+                />
+                <div
+                  className="absolute top-1/2 h-3 w-3 rounded-full bg-accent shadow"
+                  style={{ left: `${progress * 100}%`, transform: "translate(-50%, -50%)" }}
+                />
+              </div>
 
-        {/* Time */}
-        <div className="flex justify-between mt-1.5">
-          <span className="font-mono text-[9px] text-ink-2">
-            {formatTime(currentTime)}
-          </span>
-          <span className="font-mono text-[9px] text-ink-2">
-            -{formatTime(duration - currentTime)}
-          </span>
-        </div>
+              <div className="mt-1.5 flex justify-between font-mono text-[9px] text-ink-2">
+                <span>{formatTime(currentTime)}</span>
+                <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
+              </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-8 mt-5">
-          <button
-            onClick={prevTrack}
-            disabled={currentTrack === 0}
-            className="text-ink disabled:opacity-30 transition-opacity"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-            </svg>
-          </button>
+              <div className="mt-4 flex items-center justify-center gap-8">
+                <button
+                  type="button"
+                  onClick={() => playTrack(currentTrack - 1)}
+                  disabled={currentTrack === 0}
+                  className="text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="Faixa anterior"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                  </svg>
+                </button>
 
-          <button
-            onClick={togglePlay}
-            className="w-14 h-14 rounded-full bg-accent text-paper flex items-center justify-center shadow-md hover:scale-105 transition-transform"
-          >
-            {isPlaying ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </button>
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-paper shadow-md transition-transform hover:scale-105"
+                  aria-label={isPlaying ? "Pausar" : "Tocar"}
+                >
+                  {isPlaying ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                    </svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  )}
+                </button>
 
-          <button
-            onClick={nextTrack}
-            disabled={currentTrack === TRACKS.length - 1}
-            className="text-ink disabled:opacity-30 transition-opacity"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-            </svg>
-          </button>
-        </div>
+                <button
+                  type="button"
+                  onClick={() => playTrack(currentTrack + 1)}
+                  disabled={currentTrack === TRACKS.length - 1}
+                  className="text-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="Próxima faixa"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                  </svg>
+                </button>
+              </div>
 
-        {/* Tracklist */}
-        <div className="mt-8 border-t border-faint">
-          {TRACKS.map(([title, dur], i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setCurrentTrack(i);
-                setTimeout(() => {
-                  audioRef.current?.play();
-                  setIsPlaying(true);
-                }, 100);
-              }}
-              className={`w-full flex items-baseline gap-3 py-2.5 border-b border-faint text-left transition-colors ${
-                i === currentTrack
-                  ? "text-accent"
-                  : "text-ink hover:text-accent"
-              }`}
-            >
-              <span className="font-mono text-[10px] w-5 opacity-60">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="font-grotesk text-[13px] font-medium flex-1">
-                {title}
-              </span>
-              {i === currentTrack && isPlaying && (
-                <span className="text-[10px] animate-pulse">♪</span>
+              {audioError && (
+                <p className="mt-3 text-center font-mono text-[9px] text-accent">
+                  Não foi possível tocar este arquivo.
+                </p>
               )}
-              <span className="font-mono text-[10px] opacity-50">{dur}</span>
-            </button>
-          ))}
+
+              <div className="mt-6 border-t border-faint">
+                {TRACKS.map(([trackTitle, trackDuration], index) => (
+                  <button
+                    key={trackTitle}
+                    type="button"
+                    onClick={() => playTrack(index)}
+                    className={`flex w-full items-baseline gap-2 border-b border-faint py-2 text-left transition-colors ${
+                      index === currentTrack ? "text-accent" : "text-ink hover:text-accent"
+                    }`}
+                  >
+                    <span className="w-5 font-mono text-[9px] opacity-60">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex-1 font-grotesk text-[12px] font-medium">
+                      {trackTitle}
+                    </span>
+                    {index === currentTrack && isPlaying && (
+                      <span className="animate-pulse text-[10px]">♪</span>
+                    )}
+                    <span className="font-mono text-[9px] opacity-50">
+                      {trackDuration}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
+
+        <aside className="min-h-[480px] p-6 sm:p-8 lg:min-h-[760px]">
+          {!hasStarted ? (
+            <div className="flex h-full min-h-[420px] items-center justify-center text-center">
+              <div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">
+                  Letras
+                </div>
+                <p className="mt-2 max-w-xs font-grotesk text-sm leading-relaxed text-ink-2">
+                  Escolha uma faixa e aperte play. A letra aparece aqui enquanto você ouve.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-baseline justify-between gap-4 border-b border-hair pb-3">
+                <div>
+                  <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">
+                    Letra
+                  </div>
+                  <h3 className="mt-1 font-grotesk text-2xl font-extrabold tracking-tight">
+                    {title}
+                  </h3>
+                </div>
+                <span className="font-mono text-[9px] text-ink-2">
+                  {String(currentTrack + 1).padStart(2, "0")} / {TRACKS.length}
+                </span>
+              </div>
+
+              {lyrics ? (
+                <div className="mt-5 max-h-[680px] overflow-y-auto pr-3 font-grotesk text-[14px] leading-[1.65] text-ink md:columns-2 md:gap-8">
+                  {lyrics
+                    .trim()
+                    .split(/\n\s*\n/)
+                    .map((stanza, index) => (
+                      <p key={index} className="mb-5 whitespace-pre-line break-inside-avoid">
+                        {stanza}
+                      </p>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex min-h-[360px] items-center justify-center">
+                  <span className="font-mono text-[9px] uppercase tracking-wide text-accent opacity-70">
+                    letra em breve
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </aside>
       </div>
-    </div>
+    </section>
   );
 }

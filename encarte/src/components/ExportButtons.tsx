@@ -3,12 +3,19 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 interface ExportButtonsProps {
-  /** CSS selector or ref callback to find the page element to export */
+  /** Referência para o elemento que será capturado. */
   targetRef: React.RefObject<HTMLDivElement | null>;
   filename: string;
+  widthMm?: number;
+  heightMm?: number;
 }
 
-export function ExportButtons({ targetRef, filename }: ExportButtonsProps) {
+export function ExportButtons({
+  targetRef,
+  filename,
+  widthMm = 120,
+  heightMm = 120,
+}: ExportButtonsProps) {
   const [exporting, setExporting] = useState<"png" | "pdf" | null>(null);
 
   const captureCanvas = useCallback(async () => {
@@ -42,21 +49,18 @@ export function ExportButtons({ targetRef, filename }: ExportButtonsProps) {
       if (!canvas) return;
 
       const imgData = canvas.toDataURL("image/png");
-
-      // CD booklet standard: 120mm × 120mm
-      const CD_SIZE = 120;
       const pdf = new jsPDF({
-        orientation: "portrait",
+        orientation: widthMm > heightMm ? "landscape" : "portrait",
         unit: "mm",
-        format: [CD_SIZE, CD_SIZE],
+        format: [widthMm, heightMm],
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, CD_SIZE, CD_SIZE);
+      pdf.addImage(imgData, "PNG", 0, 0, widthMm, heightMm);
       pdf.save(`${filename}.pdf`);
     } finally {
       setExporting(null);
     }
-  }, [captureCanvas, filename]);
+  }, [captureCanvas, filename, heightMm, widthMm]);
 
   return (
     <div className="flex items-center gap-2">

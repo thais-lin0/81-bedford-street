@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="81 Bedford Street">
+  <rect width="64" height="64" rx="10" fill="#26251f"/>
+  <g fill="none" stroke="#33493d" stroke-width="2" opacity="0.9">
+    <path d="M0 16h64M0 32h64M0 48h64"/>
+    <path d="M16 0v16M48 0v16M8 16v16M40 16v16M24 32v16M56 32v16M8 48v16M40 48v16"/>
+  </g>
+  <rect x="8" y="10" width="48" height="44" rx="5" fill="#26251f" fill-opacity="0.78"/>
+  <text x="32" y="43" fill="#f1ebdc" font-family="Arial Black, Arial, sans-serif" font-size="32" font-weight="900" letter-spacing="-3" text-anchor="middle">81</text>
+  <rect x="14" y="49" width="36" height="3" rx="1.5" fill="#33493d"/>
+</svg>
