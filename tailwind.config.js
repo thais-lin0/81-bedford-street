@@ -10,7 +10,7 @@ export default {
         "ink-2": "rgba(38,37,31,0.52)",
         faint: "rgba(38,37,31,0.16)",
         hair: "rgba(38,37,31,0.22)",
-        accent: "#33493d",
+        accent: "#c9a96e",
       },
       fontFamily: {
         grotesk: ["Archivo", "Helvetica Neue", "Arial", "sans-serif"],
