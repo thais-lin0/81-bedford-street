@@ -1,16 +1,16 @@
 import lyricsSource from "./letras.txt?raw";
 
 export const TRACKS: [string, string][] = [
-  ["sunday", "2:54"],
-  ["on the bonnet of a car", "2:31"],
-  ["loose plans", "4:02"],
-  ["in between", "3:17"],
-  ["walking around", "3:59"],
-  ["maybe later", "4:06"],
-  ["small town", "2:52"],
-  ["no rush", "5:13"],
+  ["sunday", "4:14"],
+  ["on the bonnet of a car", "2:41"],
+  ["loose plans", "3:27"],
+  ["in between", "3:18"],
+  ["walking around", "2:50"],
+  ["maybe later", "2:56"],
+  ["small town", "3:12"],
+  ["no rush", "2:35"],
   ["coffee and gray", "2:34"],
-  ["may 28", "4:45"],
+  ["may 28", "2:38"],
 ];
 
 const TRACK_TITLES = new Set(TRACKS.map(([title]) => title));
