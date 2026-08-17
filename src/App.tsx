@@ -219,7 +219,7 @@ export default function App() {
                   style={{ left: `${progress * 100}%`, transform: "translate(-50%, -50%)" }}
                 />
               </div>
-              <div className="mt-1.5 flex justify-between font-mono text-[9px] text-paper/40">
+              <div className="mt-1.5 flex justify-between font-mono text-[10px] text-paper/55">
                 <span>{formatTime(currentTime)}</span>
                 <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
               </div>
@@ -277,7 +277,7 @@ export default function App() {
 
             {/* Tracklist */}
             <div className="mt-8 border-t border-paper/10 pt-4">
-              <h3 className="mb-3 font-mono text-[9px] uppercase tracking-[0.16em] text-paper/40">
+              <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-paper/50">
                 Faixas
               </h3>
               {TRACKS.map(([trackTitle, trackDuration], index) => (
@@ -291,7 +291,7 @@ export default function App() {
                       : "text-paper/70 hover:bg-paper/5 hover:text-paper"
                   }`}
                 >
-                  <span className="w-5 font-mono text-[9px] opacity-60">
+                  <span className="w-5 font-mono text-[11px] text-paper/60">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="flex-1 truncate font-grotesk text-[13px] font-medium">
@@ -300,7 +300,7 @@ export default function App() {
                   {index === currentTrack && isPlaying && (
                     <span className="animate-pulse text-[10px]">♪</span>
                   )}
-                  <span className="font-mono text-[9px] opacity-40">
+                  <span className="font-mono text-[11px] text-paper/60">
                     {trackDuration}
                   </span>
                 </button>
@@ -344,7 +344,7 @@ export default function App() {
       {/* ═══ CREDITS ═══ */}
       <footer className="border-t border-paper/10 bg-ink">
         <div className="mx-auto max-w-3xl px-6 py-16 md:py-20">
-          <h3 className="mb-8 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-paper/40">
+          <h3 className="mb-8 text-center font-mono text-[11px] uppercase tracking-[0.2em] text-paper/50">
             Créditos
           </h3>
 
@@ -354,18 +354,18 @@ export default function App() {
                 key={i}
                 className="flex justify-between border-b border-paper/5 py-3"
               >
-                <span className="font-mono text-[11px] text-paper/40">{role}</span>
-                <span className="font-mono text-[11px] text-paper/70">{name}</span>
+                <span className="font-mono text-[12px] text-paper/50">{role}</span>
+                <span className="font-mono text-[12px] text-paper/80">{name}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-10 space-y-2 text-center font-mono text-[10px] leading-relaxed text-paper/30">
+          <div className="mt-10 space-y-2 text-center font-mono text-[11px] leading-relaxed text-paper/50">
             <p>Letras escritas em colaboração com Claude (Anthropic).</p>
             <p>Músicas geradas e produzidas com Suno AI.</p>
           </div>
 
-          <div className="mt-12 text-center font-mono text-[9px] text-paper/20">
+          <div className="mt-12 text-center font-mono text-[10px] text-paper/30">
             © 2026 Lino
           </div>
         </div>
