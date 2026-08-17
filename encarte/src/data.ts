@@ -2,14 +2,14 @@ import lyricsSource from "./letras.txt?raw";
 
 export const TRACKS: [string, string][] = [
   ["sunday", "2:54"],
-  ["coffee and gray", "2:31"],
+  ["on the bonnet of a car", "2:31"],
   ["loose plans", "4:02"],
   ["in between", "3:17"],
-  ["wrong number", "3:38"],
   ["walking around", "3:59"],
   ["maybe later", "4:06"],
   ["small town", "2:52"],
   ["no rush", "5:13"],
+  ["coffee and gray", "2:34"],
   ["may 28", "4:45"],
 ];
 
